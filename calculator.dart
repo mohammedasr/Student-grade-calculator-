@@ -1,0 +1,197 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      home: CalculatorPage(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class CalculatorPage extends StatefulWidget {
+  const CalculatorPage({super.key});
+
+  @override
+  State<CalculatorPage> createState() => _CalculatorPageState();
+}
+
+class _CalculatorPageState extends State<CalculatorPage> {
+  String currentNumber = "";
+  String operator = "";
+  double firstNumber = 0.0;
+  bool isNewOperation = true;
+
+  String display = "0";
+
+  void appendNumber(String number) {
+    setState(() {
+      if (isNewOperation) {
+        currentNumber = number;
+        isNewOperation = false;
+      } else {
+        currentNumber += number;
+      }
+      updateDisplay();
+    });
+  }
+
+  void appendDecimal() {
+    setState(() {
+      if (isNewOperation) {
+        currentNumber = "0.";
+        isNewOperation = false;
+      } else if (!currentNumber.contains(".")) {
+        currentNumber += ".";
+      }
+      updateDisplay();
+    });
+  }
+
+  void setOperator(String op) {
+    setState(() {
+      if (currentNumber.isNotEmpty) {
+        if (operator.isNotEmpty) {
+          calculateResult();
+        }
+        firstNumber = double.tryParse(currentNumber) ?? 0.0;
+        operator = op;
+        isNewOperation = true;
+      }
+    });
+  }
+
+  void calculateResult() {
+    if (operator.isEmpty || currentNumber.isEmpty) return;
+
+    double secondNumber = double.tryParse(currentNumber) ?? 0.0;
+    double result = 0.0;
+
+    switch (operator) {
+      case "+":
+        result = firstNumber + secondNumber;
+        break;
+      case "-":
+        result = firstNumber - secondNumber;
+        break;
+      case "×":
+        result = firstNumber * secondNumber;
+        break;
+      case "÷":
+        result = secondNumber != 0 ? firstNumber / secondNumber : 0.0;
+        break;
+    }
+
+    setState(() {
+      currentNumber = formatResult(result);
+      operator = "";
+      isNewOperation = true;
+      updateDisplay();
+    });
+  }
+
+  void calculatePercent() {
+    if (currentNumber.isNotEmpty) {
+      double number = double.tryParse(currentNumber) ?? 0.0;
+      setState(() {
+        currentNumber = formatResult(number / 100);
+        updateDisplay();
+      });
+    }
+  }
+
+  void clear() {
+    setState(() {
+      currentNumber = "";
+      operator = "";
+      firstNumber = 0.0;
+      isNewOperation = true;
+      display = "0";
+    });
+  }
+
+  void delete() {
+    setState(() {
+      if (currentNumber.isNotEmpty) {
+        currentNumber = currentNumber.substring(0, currentNumber.length - 1);
+        updateDisplay();
+      }
+    });
+  }
+
+  void updateDisplay() {
+    display = currentNumber.isEmpty ? "0" : currentNumber;
+  }
+
+  String formatResult(double result) {
+    if (result % 1 == 0) {
+      return result.toInt().toString();
+    } else {
+      return result.toString();
+    }
+  }
+
+  Widget buildButton(String text, VoidCallback onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      child: Text(text, style: const TextStyle(fontSize: 20)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Calculator")),
+      body: Column(
+        children: [
+          Expanded(
+            child: Container(
+              alignment: Alignment.bottomRight,
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                display,
+                style: const TextStyle(fontSize: 40),
+              ),
+            ),
+          ),
+          GridView.count(
+            shrinkWrap: true,
+            crossAxisCount: 4,
+            children: [
+              buildButton("7", () => appendNumber("7")),
+              buildButton("8", () => appendNumber("8")),
+              buildButton("9", () => appendNumber("9")),
+              buildButton("÷", () => setOperator("÷")),
+
+              buildButton("4", () => appendNumber("4")),
+              buildButton("5", () => appendNumber("5")),
+              buildButton("6", () => appendNumber("6")),
+              buildButton("×", () => setOperator("×")),
+
+              buildButton("1", () => appendNumber("1")),
+              buildButton("2", () => appendNumber("2")),
+              buildButton("3", () => appendNumber("3")),
+              buildButton("-", () => setOperator("-")),
+
+              buildButton("0", () => appendNumber("0")),
+              buildButton(".", appendDecimal),
+              buildButton("%", calculatePercent),
+              buildButton("+", () => setOperator("+")),
+
+              buildButton("C", clear),
+              buildButton("DEL", delete),
+              buildButton("=", calculateResult),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+}
